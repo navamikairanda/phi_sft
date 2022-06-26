@@ -1,0 +1,16 @@
+/objs/*
+/arcsim/objs/*
+/arcsim/dependencies/lib/*
+/slurm-output/*
+/dist
+/logs/*
+/demo/logs/*
+/demo/conf
+/demo/meshes
+/demo/materials
+/pysim/__pycache__/*
+/phi_sft/__pycache__/*
+/phi_sft/*/__pycache__/*
+/build/*
+/config/*
+/.vscode

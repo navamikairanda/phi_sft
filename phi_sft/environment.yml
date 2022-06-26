@@ -1,0 +1,29 @@
+name: phi_sft
+channels:
+  - pytorch3d
+  - pytorch
+  - bottler
+  - iopath
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6.10
+  - pytorch=1.6.0
+  - torchvision 
+  - cudatoolkit=10.1
+  - fvcore 
+  - iopath
+  - nvidiacub
+  - psutil
+  - natsort
+  - pytorch3d=0.6.0
+  - pip
+  - pip: 
+    - scikit-image 
+    - matplotlib 
+    - imageio 
+    - plotly 
+    - opencv-python 
+    - imageio-ffmpeg
+    - torchgeometry
+    - pymeshlab
