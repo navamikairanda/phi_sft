@@ -14,18 +14,18 @@ This is the official implementation of the paper "Φ-SfT: Shape-from-Template wi
 [![Watch the video](https://img.youtube.com/vi/2jxDq8qyfg8/hqdefault.jpg)](https://youtu.be/2jxDq8qyfg8)
 
 ## What is Φ-SfT?
-Φ-Sft is an analysis-by-synthesis method to reconstruct a temporally coherent sequence of 3D shapes from a monocular RGB video, given a single initial 3D template in advance. The method models deformations as a response of the elastic surface to the external and internal forces acting on it. Given the initial 3D template, tt uses a physics simulator to generate deformed future states, which are treated as the reconstructed surfaces. The set of physical parameters Φ that describe the challenging surface deformations are optimised by minimising a dense per-pixel photometric energy. We backpropagate through the differentiable rendering and differentiable physics simulator to obtain the optimal set of physics parameters Φ. 
+Φ-Sft is an analysis-by-synthesis method to reconstruct a temporally coherent sequence of 3D shapes from a monocular RGB video, given a single initial 3D template in advance. The method models deformations as a response of the elastic surface to the external and internal forces acting on it. Given the initial 3D template, it uses a physics simulator to generate deformed future states, which are treated as the reconstructed surfaces. The set of physical parameters Φ that describe the challenging surface deformations are optimised by minimising a dense per-pixel photometric energy. We backpropagate through the differentiable rendering and differentiable physics simulator to obtain the optimal set of physics parameters Φ. 
 
 ## Installation
 
-Clone this respository to `${code_root}`. The following sets up a conda environment with all Φ-SfT dependencies
+Clone this repository to `${code_root}`. The following sets up a conda environment with all Φ-SfT dependencies
 
 ```
 conda env create -f ${code_root}/phi_sft/environment.yml
 conda activate phi_sft
 ```
 
-Φ-SfT uses physics simulator as a deformation model prior. Here, we package and re-distribute such a differentiable physics simulator.
+Φ-SfT uses a physics simulator as a deformation model prior. Here, we package and re-distribute such a differentiable physics simulator.
 You can first build the [arcsim](http://graphics.berkeley.edu/resources/ARCSim/) dependencies (ALGLIB, JsonCpp, and TAUCS) with
 ```
 cd ${code_root}/arcsim/dependencies; make
@@ -60,13 +60,13 @@ cd ${code_root}/phi_sft
 conda activate phi_sft
 python -u reconstruct_surfaces_from_sequence.py ${data_root}/${sequence_type} ${code_root}/phi_sft/config/expt_${sequence_type}_${sequence_name}.ini
 ```
-The reconstruction process requires several hundred iterations in most cases, which takes 16−24 hours on an Nvidia RTX 8000 GPU for roughly 50 frames of 1920x1080 image sequences and template mesh ~300 vertices. During recontruction at every `i_save` iterations, the code will save checkpoints and evaluate quantitatively against the groundtruth and store the result in log.txt. 
+The reconstruction process requires several hundred iterations in most cases, which takes 16−24 hours on an Nvidia RTX 8000 GPU for roughly 50 frames of 1920x1080 image sequences and template mesh ~300 vertices. During reconstruction at every `i_save` iterations, the code will save checkpoints and evaluate quantitatively against the ground-truth and store the result in log.txt. 
 
 To resume training from last checkpoint (e.g. iteration 100), set `reload=False` and `i_reload=100` in experiment configuration file `${code_root}/phi_sft/config/expt_real_s3.ini` and run `reconstruct_surfaces_from_sequence.py ` script above
 
 ### Preparing real sequences
 
-If you would like to try Φ-SfT on your own dataset, create a folder `${sequence_name}` in `${data_root}/real` with the following structure
+If you would like to try Φ-SfT on your dataset, create a folder `${sequence_name}` in `${data_root}/real` with the following structure
 * `rgbs` with monocular RGB images of a deforming surface
 * `point_clouds` with point cloud for 3D template of the surface corresponding to the first frame
 * `masks` segmentation masks
@@ -74,22 +74,22 @@ If you would like to try Φ-SfT on your own dataset, create a folder `${sequence
 * `camera.json`, camera intrinsics assuming the camera coordinate system of [Kinect SDK](https://docs.microsoft.com/en-us/azure/kinect-dk/coordinate-systems) 
 * `sim_conf.json`, simulation configuration, can be kept unchanged
 
-The blurred version of ground-truth segmentation masks are used for silhouette loss in Φ-SfT, and can be generated with  
+The blurred version of ground-truth segmentation masks is used for silhouette loss in Φ-SfT and can be generated with  
 ```
 python preprocess_real_sequence.py  ${data_root}/real ${sequence_name} blur_masked_images 
 ```
 
-Given Kinect RGB image and point cloud for template, generate 3D template with poisson surface reconstruction. The corresponding texture map for the template is obtained by projecting the vertices of the template mesh onto the image space of the ﬁrst image with known camera intrinsics.
+Given Kinect RGB image and point cloud for the template, generate 3D template mesh with poisson surface reconstruction. The corresponding texture map for the template is obtained by projecting the vertices of the template mesh onto the image space of the ﬁrst image with known camera intrinsics.
 ```
 python preprocess_real_sequence.py  ${data_root}/real ${sequence_name} generate_template_surface
 ```
 
-The generated template can be cleaned with a mesh editing tool such as Blender and saved as `${data_root}/real/${sequence_name}/templates/template_mesh_final.obj`. The following script prepares the template in the format expected by the physics simulator used in Φ-SfT. It determines the initial rigid pose of the template relative to a ﬂat sheet on XY plane (as requried in arcsim) using iterative closest point (ICP). Pose estimation parameters in `${data_root}/real/${sequence_name}/preprocess.ini` can be modified to get accurate pose.
+The generated template can be cleaned with a mesh editing tool such as Blender and saved as `${data_root}/real/${sequence_name}/templates/template_mesh_final.obj`. The following script prepares the template in the format expected by the physics simulator used in Φ-SfT. It determines the initial rigid pose of the template relative to a ﬂat sheet on the XY plane (as required in arcsim) using iterative closest point (ICP). Pose estimation parameters in `${data_root}/real/${sequence_name}/preprocess.ini` can be modified to get accurate pose.
 ```
 python preprocess_real_sequence.py  ${data_root}/real ${sequence_name} clean_template_surface
 ```
 
-Now, your data sequence is ready for running Φ-SfT! Create an experiment configuration file in `{code_root}/phi_sft/config` and follow the instructions in the previous section. If the generated template is not positively oriented, you may get the follwing error `Error: TAUCS failed with return value -1` while running `reconstruct_surfaces_from_sequence.py`. This can be addressed by setting invert_faces_orientation=True,
+Now, your data sequence is ready for running Φ-SfT! Create an experiment configuration file in `{code_root}/phi_sft/config` and follow the instructions in the previous section. If the generated template is not positively oriented, you may get the following error `Error: TAUCS failed with return value -1` while running `reconstruct_surfaces_from_sequence.py`. This can be addressed by setting invert_faces_orientation=True,
  in `preprocess.ini`and running the last step in template processing (clean_template_surface). 
 
 ### Generating synthetic sequences
@@ -105,11 +105,11 @@ python generate_synthetic_sequence.py ${data_root}/synthetic ${sequence_name} ge
 python generate_synthetic_sequence.py ${data_root}/synthetic ${sequence_name} render_surfaces
 ```
 
-Now, your data sequence is ready for running Φ-SfT, create an experiment configuration file in `{code_root}/phi_sft/config` and follow the instructions in the first section.
+Now that your data sequence is ready for running Φ-SfT, create an experiment configuration file in `{code_root}/phi_sft/config` and follow the instructions in the first section.
  
 ### Evaluation
 
-Run the following to evaluate the reconstructed surfaces of Φ-SfT againt ground-truth. This computes the chamfer distance for real data sequences and angular as well as 3D error for synthetic sequences. Additionally, it provides mesh and depth visualisations of reconstructed surfaces as in the paper.
+Run the following to evaluate the reconstructed surfaces of Φ-SfT against ground-truth. This computes the chamfer distance for real data sequences and angular as well as 3D error for synthetic sequences. Additionally, it provides mesh and depth visualisations of reconstructed surfaces as in the paper.
 
 ```
 sequence_type=real
@@ -140,6 +140,6 @@ If you use this code for your research, please cite:
 
 
 ## License
-This software is provided freely for non-commercial use. The code builds on the differentiable version (https://github.com/williamljb/DifferentiableCloth) of ARCSim cloth simulator (http://graphics.berkeley.edu/resources/ARCSim/). We thank both of them for releasing their code.
+This software is provided freely for non-commercial use. The code builds on the differentiable version (https://github.com/williamljb/DifferentiableCloth) of the ARCSim cloth simulator (http://graphics.berkeley.edu/resources/ARCSim/). We thank both of them for releasing their code.
 
-We release this code under MIT license. You can find all licenses in the file LICENSE.
+We release this code under the MIT license. You can find all licenses in the file LICENSE.
